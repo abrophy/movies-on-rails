@@ -11,23 +11,26 @@ namespace :data do
     abort "Movies file not found: #{movies_path}" unless movies_path.exist?
     abort "Reviews file not found: #{reviews_path}" unless reviews_path.exist?
 
-    result = begin
-      CsvImporter.new(movies_path: movies_path, reviews_path: reviews_path).call
-    rescue CsvImporter::InvalidStructureError => e
-      abort e.message
-    end
+    movies_importer = MoviesImporter.new(movies_path)
+    reviews_importer = ReviewsImporter.new(reviews_path)
+  rescue CsvImport::InvalidStructureError => e
+    abort e.message
+  else
+    movies_result = movies_importer.call
+    reviews_result = reviews_importer.call
 
     puts "Import complete:"
-    puts "  movies:            #{result.movies}"
-    puts "  actors:            #{result.actors}"
-    puts "  filming locations: #{result.filming_locations}"
-    puts "  appearances:       #{result.appearances}"
-    puts "  reviews:           #{result.reviews}"
+    puts "  movies:            #{movies_result.movies}"
+    puts "  actors:            #{movies_result.actors}"
+    puts "  filming locations: #{movies_result.filming_locations}"
+    puts "  appearances:       #{movies_result.appearances}"
+    puts "  reviews:           #{reviews_result.reviews}"
 
-    if result.errors.any?
+    errors = movies_result.errors + reviews_result.errors
+    if errors.any?
       warn
-      warn "Skipped #{result.errors.size} row(s) with problems:"
-      result.errors.each { |error| warn "  #{error[:file]}:#{error[:line]} — #{error[:message]}" }
+      warn "Skipped #{errors.size} row(s) with problems:"
+      errors.each { |error| warn "  #{error[:file]}:#{error[:line]} — #{error[:message]}" }
       warn
     end
   end

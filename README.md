@@ -115,7 +115,8 @@ partial actor–location sets.
 
 ### Importer
 
-The importer treats the CSVs as untrusted input:
+Two importers — `MoviesImporter` and `ReviewsImporter` — treat the CSVs as
+untrusted input:
 
 - **Structure validation** — each file's header row must match the expected
   columns exactly; anything else raises an error before any data is written.
