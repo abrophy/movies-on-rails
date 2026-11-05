@@ -13,12 +13,11 @@ relational schema, and expose the data through web pages and a small JSON API.
 
 ```bash
 bundle install
-bin/rails db:prepare
-bin/rails data:import      # loads movies.csv and reviews.csv (idempotent)
+bin/rails db:prepare      # creates DB, migrates, and seeds the CSVs
 bin/dev                    # http://localhost:3000 (server + Tailwind watcher)
 ```
 
-`data:import` reads `movies.csv` and `reviews.csv` from the repo root by default. Set `MOVIES` and `REVIEWS` to import specific files (absolute or Rails-root-relative):
+`db:prepare` seeds the CSVs on a fresh database (via `db/seeds.rb`). Use `bin/rails data:import` to re-import or target specific files (absolute or Rails-root-relative):
 
 ```bash
 MOVIES=/path/to/movies.csv REVIEWS=/path/to/reviews.csv bin/rails data:import
@@ -58,13 +57,14 @@ an actor's filming locations can be derived across all the movies they appear in
 
 ## API endpoints
 
-| Method | Path | Description |
-| ------ | ---- | ----------- |
-| GET | `/api/v1/movies` | Movies sorted by average rating (includes `average_rating` and `review_count`) |
-| GET | `/api/v1/movies/:id` | One movie with its actors, locations, and reviews |
-| GET | `/api/v1/actors` | All actors |
-| GET | `/api/v1/actors?q=...` | Search actors by name (case-insensitive substring) |
-| GET | `/api/v1/actors/:id` | One actor with their movies and filming locations |
+| Method | Path                   | Description                                                                    |
+| ------ | ---------------------- | ------------------------------------------------------------------------------ |
+| GET    | `/api/v1/movies`       | Movies sorted by average rating (includes `average_rating` and `review_count`) |
+| GET    | `/api/v1/movies/:id`   | One movie with its actors, locations, and reviews                              |
+| GET    | `/api/v1/actors`       | All actors                                                                     |
+| GET    | `/api/v1/actors?q=...` | Search actors by name (case-insensitive substring)                             |
+| GET    | `/api/v1/actors/:id`   | One actor with their movies and filming locations                              |
+| GET    | `/api/v1/locations/:id` | One location with the movies filmed there |
 
 Example — `GET /api/v1/movies`:
 
@@ -95,11 +95,11 @@ Example — `GET /api/v1/movies`:
 
 One interesting decision was how to model the `Movies × Actors × Locations` links.
 In the provided CSVs, every actor linked to a movie was present at every location —
-`movies.csv` is a full cartesian product of each movie's actors and locations.
+`movies.csv`.
 
 The simpler alternative is to model a movie as having many locations and deriving
 an actor's locations through that link. But that schema cannot represent a case
-where an actor did *not* film at one of a movie's distinct locations — the data
+where an actor did _not_ film at one of a movie's distinct locations; the data
 would be silently lost on import.
 
 At the scale of this take-home, the row-count and efficiency difference is
@@ -122,11 +122,22 @@ The importer treats the CSVs as untrusted input:
 - **Idempotent** — entities are deduplicated in memory and bulk-inserted with
   `insert_all(..., unique_by:)` against unique indexes, so re-running is a no-op.
 
-### No authentication
+### Security
 
-The brief mentions security, not authentication, and every endpoint is read-only.
-Security is handled with Rails defaults: strong parameters, CSRF protection,
-parameterized queries, and escaping of `LIKE` wildcards in search.
+The brief mentions security rather than authentication, and every endpoint is
+read-only, so no login flow is required. Security is handled as follows:
+
+- **SQL injection** — all queries are parameterized; no CSV or user input is ever
+  concatenated into SQL, and `insert_all` binds values.
+- **Search** — the actor search uses a bound parameter plus `LIKE`-escaping, so
+  wildcards and hostile strings are treated literally.
+- **XSS** — templates use ERB auto-escaping; there is no `html_safe`/`raw` output.
+- **CSRF / mass assignment** — Rails defaults are in place, though with no
+  state-changing routes or write params there is no surface to exploit.
+- **Secrets** — `config/master.key` is gitignored; only the encrypted
+  `credentials.yml.enc` is committed.
+- **Data integrity** — unique indexes, foreign keys, and a `stars` CHECK
+  constraint are enforced at the database level.
 
 ### Location overview page
 
