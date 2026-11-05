@@ -1,10 +1,17 @@
 namespace :data do
-  desc "Import movies.csv and reviews.csv into the database (idempotent)"
+  desc "Import movie and review CSVs (idempotent). " \
+       "Set MOVIES and REVIEWS to target specific files (absolute or Rails-root-relative)."
   task import: :environment do
-    result = CsvImporter.new(
-      movies_path: Rails.root.join("movies.csv"),
-      reviews_path: Rails.root.join("reviews.csv")
-    ).call
+    movies = Pathname(ENV.fetch("MOVIES", "movies.csv"))
+    reviews = Pathname(ENV.fetch("REVIEWS", "reviews.csv"))
+
+    movies_path = movies.absolute? ? movies : Rails.root.join(movies)
+    reviews_path = reviews.absolute? ? reviews : Rails.root.join(reviews)
+
+    abort "Movies file not found: #{movies_path}" unless movies_path.exist?
+    abort "Reviews file not found: #{reviews_path}" unless reviews_path.exist?
+
+    result = CsvImporter.new(movies_path: movies_path, reviews_path: reviews_path).call
 
     puts "Import complete:"
     puts "  movies:            #{result.movies}"

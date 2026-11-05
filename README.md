@@ -18,6 +18,12 @@ bin/rails data:import      # loads movies.csv and reviews.csv (idempotent)
 bin/dev                    # http://localhost:3000 (server + Tailwind watcher)
 ```
 
+`data:import` reads `movies.csv` and `reviews.csv` from the repo root by default. Set `MOVIES` and `REVIEWS` to import specific files (absolute or Rails-root-relative):
+
+```bash
+MOVIES=/path/to/movies.csv REVIEWS=/path/to/reviews.csv bin/rails data:import
+```
+
 `bin/rails tailwindcss:build` compiles the CSS once if you prefer `bin/rails server` over `bin/dev`.
 
 ## Tests
