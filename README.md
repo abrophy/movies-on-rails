@@ -35,6 +35,7 @@ bin/rails test
 - **Movie overview page** — description, director, year, cast, filming locations,
   and reviews with rating
 - **Actor overview page** — the actor's movies and filming locations
+- **Location overview page** — the movies filmed at a given location
 - **Actor search** — case-insensitive substring search
 - **JSON API** — the same data as machine-readable endpoints
 

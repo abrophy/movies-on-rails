@@ -40,6 +40,7 @@ against unique indexes. Re-running produces identical counts.
 - [x] Landing page: all movies sorted by average rating (zero-review movies last)
 - [x] Movie overview page
 - [x] Actor overview page
+- [x] Location overview page (movies filmed there)
 - [x] Actor search
 - [x] JSON API (movie list, movie, actor, actor search)
 - [x] Test suite (models, importer idempotency, HTML + API integration)

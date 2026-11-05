@@ -41,6 +41,21 @@ class MoviesFlowTest < ActionDispatch::IntegrationTest
     assert_match "Inception", response.body
   end
 
+  test "location page lists the movies filmed there" do
+    location = FilmingLocation.find_by(name: "Los Angeles")
+    get location_path(location)
+    assert_response :success
+    assert_match "Los Angeles", response.body
+    assert_match "Gone in 60 seconds", response.body
+    assert_match "Inception", response.body
+  end
+
+  test "movie page links its filming locations" do
+    movie = Movie.find_by(title: "Gone in 60 seconds")
+    get movie_path(movie)
+    assert_match %r{href="/locations/\d+"}, response.body
+  end
+
   test "api movie list returns sorted json" do
     get api_v1_movies_path
     assert_response :success

@@ -16,7 +16,7 @@
     <h2 class="mb-2 font-semibold">Filming locations</h2>
     <ul class="space-y-1">
       <% @locations.each do |location| %>
-        <li><%= location.name %> <span class="text-slate-400">(<%= location.country %>)</span></li>
+        <li><%= link_to location.name, location_path(location), class: "text-blue-600 hover:underline" %> <span class="text-slate-400">(<%= location.country %>)</span></li>
       <% end %>
     </ul>
   </div>

@@ -6,6 +6,7 @@ Rails.application.routes.draw do
   root "movies#index"
   resources :movies, only: [ :index, :show ]
   resources :actors, only: [ :index, :show ]
+  get "locations/:id", to: "filming_locations#show", as: :location
 
   # JSON API
   namespace :api do
