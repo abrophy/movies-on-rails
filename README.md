@@ -41,7 +41,7 @@ MOVIES=/data/movies.csv REVIEWS=/data/reviews.csv bin/rails data:import
 ## Tests
 
 ```bash
-bin/rails test
+bundle exec rspec
 ```
 
 ## Linting

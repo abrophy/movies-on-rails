@@ -1,7 +1,7 @@
-require "test_helper"
+require "rails_helper"
 
-class AppearanceTest < ActiveSupport::TestCase
-  test "movie, actor, and location combination is unique" do
+RSpec.describe Appearance, type: :model do
+  it "requires the movie, actor, and location combination to be unique" do
     movie = Movie.create!(title: "A Movie")
     actor = Actor.create!(name: "An Actor")
     location = FilmingLocation.create!(name: "A Location", country: "US")
@@ -9,6 +9,6 @@ class AppearanceTest < ActiveSupport::TestCase
     Appearance.create!(movie: movie, actor: actor, filming_location: location)
     duplicate = Appearance.new(movie: movie, actor: actor, filming_location: location)
 
-    assert_not duplicate.valid?
+    expect(duplicate).not_to be_valid
   end
 end
