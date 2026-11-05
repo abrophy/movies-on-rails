@@ -1,57 +1,57 @@
-<p class="back"><%= link_to "← All movies", root_path %></p>
+<p class="mb-2 text-sm"><%= link_to "← All movies", root_path, class: "text-blue-600 hover:underline" %></p>
 
-<h1><%= @movie.title %> <span class="muted"><%= @movie.year %></span></h1>
+<h1 class="mb-4 text-2xl font-bold"><%= @movie.title %> <span class="font-normal text-slate-400"><%= @movie.year %></span></h1>
 
-<div class="card">
-  <p class="director">Directed by <strong><%= @movie.director %></strong></p>
-  <div class="rating">
-    <span class="stars"><%= render_stars(@average_rating) %></span>
-    <span class="rating-num"><%= format_rating(@average_rating) %></span>
-    <span class="review-count">· <%= pluralize(@reviews.size, "review") %></span>
+<div class="mb-4 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+  <p class="mb-2 text-slate-600">Directed by <span class="font-medium text-slate-900"><%= @movie.director %></span></p>
+  <div class="flex items-center gap-2">
+    <span class="tracking-tight text-amber-500"><%= render_stars(@average_rating) %></span>
+    <span class="font-semibold"><%= format_rating(@average_rating) %></span>
+    <span class="text-sm text-slate-500">· <%= pluralize(@reviews.size, "review") %></span>
   </div>
   <% if @movie.description.present? %>
-    <p class="description"><%= @movie.description %></p>
+    <p class="mt-3 text-slate-700"><%= @movie.description %></p>
   <% end %>
 </div>
 
-<div class="two-col">
-  <div class="card">
-    <h2>Cast</h2>
-    <ul class="plain-list">
+<div class="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+  <div class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+    <h2 class="mb-2 font-semibold">Cast</h2>
+    <ul class="space-y-1">
       <% @actors.each do |actor| %>
-        <li><%= link_to actor.name, actor_path(actor) %></li>
+        <li><%= link_to actor.name, actor_path(actor), class: "text-blue-600 hover:underline" %></li>
       <% end %>
     </ul>
   </div>
 
-  <div class="card">
-    <h2>Filming locations</h2>
-    <ul class="plain-list">
+  <div class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+    <h2 class="mb-2 font-semibold">Filming locations</h2>
+    <ul class="space-y-1">
       <% @locations.each do |location| %>
-        <li><%= location.name %> <span class="muted">(<%= location.country %>)</span></li>
+        <li><%= location.name %> <span class="text-slate-400">(<%= location.country %>)</span></li>
       <% end %>
     </ul>
   </div>
 </div>
 
-<div class="card">
-  <h2>Reviews</h2>
+<div class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+  <h2 class="mb-3 font-semibold">Reviews</h2>
   <% if @reviews.any? %>
-    <ul class="reviews">
+    <ul class="divide-y divide-slate-200">
       <% @reviews.each do |review| %>
-        <li>
-          <div class="review-head">
-            <strong><%= review.reviewer %></strong>
-            <span class="stars"><%= render_stars(review.stars) %></span>
-            <span class="muted"><%= review.stars %>/5</span>
+        <li class="py-3 first:pt-0 last:pb-0">
+          <div class="flex items-center gap-2">
+            <span class="font-medium"><%= review.reviewer %></span>
+            <span class="text-amber-500"><%= render_stars(review.stars) %></span>
+            <span class="text-sm text-slate-400"><%= review.stars %>/5</span>
           </div>
           <% if review.body.present? %>
-            <p class="review-body"><%= review.body %></p>
+            <p class="mt-1 text-slate-700"><%= review.body %></p>
           <% end %>
         </li>
       <% end %>
     </ul>
   <% else %>
-    <p class="muted">No reviews yet.</p>
+    <p class="text-slate-500">No reviews yet.</p>
   <% end %>
 </div>

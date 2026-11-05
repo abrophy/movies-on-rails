@@ -1,21 +1,21 @@
-<h1>Movies</h1>
+<h1 class="mb-6 text-2xl font-bold">Movies</h1>
 
 <% if @movies.any? %>
-  <ul class="movie-list">
+  <ul class="divide-y divide-slate-200 rounded-lg border border-slate-200 bg-white shadow-sm">
     <% @movies.each do |movie| %>
-      <li class="card movie-card">
-        <div class="movie-main">
-          <%= link_to movie.title, movie_path(movie), class: "movie-title" %>
-          <span class="movie-meta"><%= [ movie.year, movie.director ].compact.join(" · ") %></span>
+      <li class="flex items-center justify-between gap-4 px-5 py-4">
+        <div class="min-w-0">
+          <%= link_to movie.title, movie_path(movie), class: "font-medium text-blue-600 hover:underline" %>
+          <p class="truncate text-sm text-slate-500"><%= [ movie.year, movie.director ].compact.join(" · ") %></p>
         </div>
-        <div class="movie-rating">
-          <span class="stars" title="<%= format_rating(movie.average_rating) %> / 5"><%= render_stars(movie.average_rating) %></span>
-          <span class="rating-num"><%= format_rating(movie.average_rating) %></span>
-          <span class="review-count">(<%= pluralize(movie.review_count, "review") %>)</span>
+        <div class="flex shrink-0 items-center gap-2 whitespace-nowrap">
+          <span class="tracking-tight text-amber-500" title="<%= format_rating(movie.average_rating) %> / 5"><%= render_stars(movie.average_rating) %></span>
+          <span class="text-sm font-semibold"><%= format_rating(movie.average_rating) %></span>
+          <span class="text-sm text-slate-500">(<%= pluralize(movie.review_count, "review") %>)</span>
         </div>
       </li>
     <% end %>
   </ul>
 <% else %>
-  <p class="empty">No movies yet. Run <code>bin/rails data:import</code> to load the CSVs.</p>
+  <p class="text-slate-500">No movies yet. Run <code class="rounded bg-slate-100 px-1.5 py-0.5 text-sm">bin/rails data:import</code> to load the CSVs.</p>
 <% end %>

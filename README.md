@@ -7,7 +7,7 @@ relational schema, and expose the data through web pages and a small JSON API.
 
 - **Ruby 3.4**, **Rails 8.1**
 - **SQLite** (Rails default — no external database needed)
-- **Hotwire / Turbo** for the frontend, minimal hand-written CSS — no JS framework
+- **Hotwire / Turbo** for the frontend, **Tailwind CSS** for styling — no JS framework
 
 ## Installation
 
@@ -15,8 +15,10 @@ relational schema, and expose the data through web pages and a small JSON API.
 bundle install
 bin/rails db:prepare
 bin/rails data:import      # loads movies.csv and reviews.csv (idempotent)
-bin/rails server           # http://localhost:3000
+bin/dev                    # http://localhost:3000 (server + Tailwind watcher)
 ```
+
+`bin/rails tailwindcss:build` compiles the CSS once if you prefer `bin/rails server` over `bin/dev`.
 
 ## Tests
 

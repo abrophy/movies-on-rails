@@ -7,7 +7,7 @@ feature/usage documentation lives in [README.md](README.md).
 
 - Rails 8.1, Ruby 3.4
 - SQLite
-- Hotwire / Turbo (no JS framework), minimal CSS
+- Hotwire / Turbo (no JS framework), Tailwind CSS
 
 ## Schema decision
 

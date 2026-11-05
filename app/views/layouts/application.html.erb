@@ -7,20 +7,21 @@
     <%= csp_meta_tag %>
     <%= yield :head %>
     <link rel="icon" href="/icon.svg" type="image/svg+xml">
-    <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
+    <%= stylesheet_link_tag "tailwind", "data-turbo-track": "reload" %>
   </head>
-  <body>
-    <header class="site-header">
-      <div class="container">
-        <%= link_to "Movies on Rails", root_path, class: "brand" %>
-        <%= form_with url: actors_path, method: :get, class: "search-form" do |f| %>
-          <%= f.search_field :q, value: params[:q], placeholder: "Search actors…", "aria-label": "Search actors" %>
-          <%= f.submit "Search" %>
+  <body class="min-h-screen bg-slate-50 text-slate-900 antialiased">
+    <header class="border-b border-slate-200 bg-white">
+      <div class="mx-auto flex max-w-4xl items-center justify-between gap-4 px-4 py-3">
+        <%= link_to "Movies on Rails", root_path, class: "text-lg font-semibold text-slate-900 hover:text-blue-600" %>
+        <%= form_with url: actors_path, method: :get, class: "flex gap-2" do |f| %>
+          <%= f.search_field :q, value: params[:q], placeholder: "Search actors…", "aria-label": "Search actors",
+                class: "rounded-md border border-slate-300 px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500" %>
+          <%= f.submit "Search", class: "cursor-pointer rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700" %>
         <% end %>
       </div>
     </header>
 
-    <main class="container">
+    <main class="mx-auto w-full max-w-4xl px-4 py-8">
       <%= yield %>
     </main>
   </body>
