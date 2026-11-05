@@ -1,5 +1,5 @@
 namespace :data do
-  desc "Import the movie CSV (idempotent). Set MOVIES to target a specific file (absolute or Rails-root-relative)."
+  desc "Import the movie CSV (idempotent). Set MOVIES to target a specific file; defaults to movies.csv."
   task import_movies: :environment do
     path = import_path(ENV.fetch("MOVIES", "movies.csv"))
     abort "Movies file not found: #{path}" unless path.exist?
@@ -14,7 +14,7 @@ namespace :data do
     print_import_errors(result.errors)
   end
 
-  desc "Import the review CSV (idempotent). Set REVIEWS to target a specific file. Movies must already be imported."
+  desc "Import the review CSV (idempotent). Set REVIEWS to target a specific file; defaults to reviews.csv. Movies must already be imported."
   task import_reviews: :environment do
     path = import_path(ENV.fetch("REVIEWS", "reviews.csv"))
     abort "Reviews file not found: #{path}" unless path.exist?
@@ -24,7 +24,7 @@ namespace :data do
     print_import_errors(result.errors)
   end
 
-  desc "Import both CSVs in order: movies, then reviews (idempotent)."
+  desc "Import both CSVs in order: movies, then reviews (idempotent). Honors MOVIES and REVIEWS; defaults to movies.csv and reviews.csv."
   task import: [ :import_movies, :import_reviews ]
 end
 

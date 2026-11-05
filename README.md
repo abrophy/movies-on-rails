@@ -25,11 +25,15 @@ bin/rails data:import_movies   # movies only
 bin/rails data:import_reviews  # reviews only (movies must already exist)
 ```
 
-Each task accepts a path override via an environment variable (absolute or Rails-root-relative):
+Each task defaults to `movies.csv` / `reviews.csv` in the repo root. Override the path with `MOVIES` and/or `REVIEWS` (absolute, or relative to the repo root):
 
 ```bash
-MOVIES=/path/to/movies.csv  bin/rails data:import_movies
-REVIEWS=/path/to/reviews.csv bin/rails data:import_reviews
+# individual imports
+MOVIES=/data/movies.csv  bin/rails data:import_movies
+REVIEWS=/data/reviews.csv bin/rails data:import_reviews
+
+# the combo honors both
+MOVIES=/data/movies.csv REVIEWS=/data/reviews.csv bin/rails data:import
 ```
 
 `bin/rails tailwindcss:build` compiles the CSS once if you prefer `bin/rails server` over `bin/dev`.
