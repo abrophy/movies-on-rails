@@ -17,10 +17,19 @@ bin/rails db:prepare      # creates DB, migrates, and seeds the CSVs
 bin/dev                    # http://localhost:3000 (server + Tailwind watcher)
 ```
 
-`db:prepare` seeds the CSVs on a fresh database (via `db/seeds.rb`). Use `bin/rails data:import` to re-import or target specific files (absolute or Rails-root-relative):
+`db:prepare` seeds the CSVs on a fresh database (via `db/seeds.rb`). To re-import, use the import tasks:
 
 ```bash
-MOVIES=/path/to/movies.csv REVIEWS=/path/to/reviews.csv bin/rails data:import
+bin/rails data:import          # both files, movies then reviews
+bin/rails data:import_movies   # movies only
+bin/rails data:import_reviews  # reviews only (movies must already exist)
+```
+
+Each task accepts a path override via an environment variable (absolute or Rails-root-relative):
+
+```bash
+MOVIES=/path/to/movies.csv  bin/rails data:import_movies
+REVIEWS=/path/to/reviews.csv bin/rails data:import_reviews
 ```
 
 `bin/rails tailwindcss:build` compiles the CSS once if you prefer `bin/rails server` over `bin/dev`.

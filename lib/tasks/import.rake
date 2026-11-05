@@ -1,37 +1,54 @@
 namespace :data do
-  desc "Import movie and review CSVs (idempotent). " \
-       "Set MOVIES and REVIEWS to target specific files (absolute or Rails-root-relative)."
-  task import: :environment do
-    movies = Pathname(ENV.fetch("MOVIES", "movies.csv"))
-    reviews = Pathname(ENV.fetch("REVIEWS", "reviews.csv"))
+  desc "Import the movie CSV (idempotent). Set MOVIES to target a specific file (absolute or Rails-root-relative)."
+  task import_movies: :environment do
+    path = import_path(ENV.fetch("MOVIES", "movies.csv"))
+    abort "Movies file not found: #{path}" unless path.exist?
 
-    movies_path = movies.absolute? ? movies : Rails.root.join(movies)
-    reviews_path = reviews.absolute? ? reviews : Rails.root.join(reviews)
-
-    abort "Movies file not found: #{movies_path}" unless movies_path.exist?
-    abort "Reviews file not found: #{reviews_path}" unless reviews_path.exist?
-
-    movies_importer = MoviesImporter.new(movies_path)
-    reviews_importer = ReviewsImporter.new(reviews_path)
-  rescue CsvImport::InvalidStructureError => e
-    abort e.message
-  else
-    movies_result = movies_importer.call
-    reviews_result = reviews_importer.call
-
-    puts "Import complete:"
-    puts "  movies:            #{movies_result.movies}"
-    puts "  actors:            #{movies_result.actors}"
-    puts "  filming locations: #{movies_result.filming_locations}"
-    puts "  appearances:       #{movies_result.appearances}"
-    puts "  reviews:           #{reviews_result.reviews}"
-
-    errors = movies_result.errors + reviews_result.errors
-    if errors.any?
-      warn
-      warn "Skipped #{errors.size} row(s) with problems:"
-      errors.each { |error| warn "  #{error[:file]}:#{error[:line]} — #{error[:message]}" }
-      warn
-    end
+    result = run_import(MoviesImporter, path)
+    print_import_result(
+      "movies" => result.movies,
+      "actors" => result.actors,
+      "filming locations" => result.filming_locations,
+      "appearances" => result.appearances
+    )
+    print_import_errors(result.errors)
   end
+
+  desc "Import the review CSV (idempotent). Set REVIEWS to target a specific file. Movies must already be imported."
+  task import_reviews: :environment do
+    path = import_path(ENV.fetch("REVIEWS", "reviews.csv"))
+    abort "Reviews file not found: #{path}" unless path.exist?
+
+    result = run_import(ReviewsImporter, path)
+    print_import_result("reviews" => result.reviews)
+    print_import_errors(result.errors)
+  end
+
+  desc "Import both CSVs in order: movies, then reviews (idempotent)."
+  task import: [ :import_movies, :import_reviews ]
+end
+
+def import_path(value)
+  path = Pathname(value)
+  path.absolute? ? path : Rails.root.join(path)
+end
+
+def run_import(importer_class, path)
+  importer_class.new(path).call
+rescue CsvImport::InvalidStructureError => e
+  abort e.message
+end
+
+def print_import_result(counts)
+  puts "Import complete:"
+  counts.each { |label, count| puts format("  %-18s %s", "#{label}:", count) }
+end
+
+def print_import_errors(errors)
+  return if errors.empty?
+
+  warn
+  warn "Skipped #{errors.size} row(s) with problems:"
+  errors.each { |error| warn "  #{error[:file]}:#{error[:line]} — #{error[:message]}" }
+  warn
 end
