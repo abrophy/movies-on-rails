@@ -5,7 +5,7 @@ require "fileutils"
 class ReviewsImporterTest < ActiveSupport::TestCase
   def setup
     # Reviews join movies by title, so the movies must exist first.
-    MoviesImporter.new(Rails.root.join("movies.csv")).call
+    MoviesImporter.new(csv_fixture("movies.csv")).call
     @tmpdir = Dir.mktmpdir("reviews_importer_test")
   end
 
@@ -20,7 +20,7 @@ class ReviewsImporterTest < ActiveSupport::TestCase
   end
 
   test "imports reviews for known movies" do
-    result = ReviewsImporter.new(Rails.root.join("reviews.csv")).call
+    result = ReviewsImporter.new(csv_fixture("reviews.csv")).call
 
     assert_equal 9, result.reviews
     assert_empty result.errors
@@ -28,7 +28,7 @@ class ReviewsImporterTest < ActiveSupport::TestCase
   end
 
   test "is idempotent across repeated runs" do
-    importer = ReviewsImporter.new(Rails.root.join("reviews.csv"))
+    importer = ReviewsImporter.new(csv_fixture("reviews.csv"))
     importer.call
     importer.call
 

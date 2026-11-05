@@ -3,8 +3,8 @@ require "json"
 
 class MoviesFlowTest < ActionDispatch::IntegrationTest
   setup do
-    MoviesImporter.new(Rails.root.join("movies.csv")).call
-    ReviewsImporter.new(Rails.root.join("reviews.csv")).call
+    MoviesImporter.new(csv_fixture("movies.csv")).call
+    ReviewsImporter.new(csv_fixture("reviews.csv")).call
   end
 
   test "landing page lists movies sorted by average rating" do

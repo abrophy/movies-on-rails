@@ -10,6 +10,9 @@ module ActiveSupport
     # Setup all fixtures in test/fixtures/*.yml for all tests in alphabetical order.
     fixtures :all
 
-    # Add more helper methods to be used by all tests here...
+    # Path to a CSV fixture under test/fixtures/csv/.
+    def csv_fixture(name)
+      Rails.root.join("test", "fixtures", "csv", name)
+    end
   end
 end

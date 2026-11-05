@@ -4,7 +4,7 @@ require "fileutils"
 
 class MoviesImporterTest < ActiveSupport::TestCase
   def setup
-    @importer = MoviesImporter.new(Rails.root.join("movies.csv"))
+    @importer = MoviesImporter.new(csv_fixture("movies.csv"))
     @tmpdir = Dir.mktmpdir("movies_importer_test")
   end
 
