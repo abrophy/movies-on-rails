@@ -14,7 +14,9 @@ class ReviewsImporter
     @errors = []
 
     rows = parse_reviews
-    movie_ids = Movie.pluck(:title, :id).to_h
+    movie_ids = Movie.pluck(:title, :id).each_with_object({}) do |(title, id), memo|
+      memo[normalize_key(title)] = id
+    end
     inserted = insert_reviews(rows, movie_ids)
 
     Result.new(reviews: inserted, errors: @errors)
@@ -59,7 +61,7 @@ class ReviewsImporter
   def insert_reviews(rows, movie_ids)
     now = Time.current
     prepared = rows.filter_map do |review|
-      movie_id = movie_ids[review[:title]]
+      movie_id = movie_ids[normalize_key(review[:title])]
       unless movie_id
         record_error(@path, review[:line], "references unknown movie #{review[:title].inspect}")
         next

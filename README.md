@@ -44,6 +44,8 @@ MOVIES=/data/movies.csv REVIEWS=/data/reviews.csv bin/rails data:import
 bundle exec rspec
 ```
 
+System (end-to-end) specs drive a headless Chrome browser; Chrome must be installed.
+
 ## Linting
 
 ```bash
@@ -114,7 +116,7 @@ Example — `GET /api/v1/movies`:
 
 One interesting decision was how to model the `Movies × Actors × Locations` links.
 In the provided CSVs, every actor linked to a movie was present at every location —
-`movies.csv`.
+`movies.csv` is a full cartesian product of each movie's actors and locations.
 
 The simpler alternative is to model a movie as having many locations and deriving
 an actor's locations through that link. But that schema cannot represent a case
@@ -139,6 +141,9 @@ untrusted input:
   as SQL parameters; no CSV value is ever concatenated into SQL.
 - **Fail loud, don't fail** — malformed rows are skipped and reported (file, line,
   reason), and every valid row still imports.
+- **Case-insensitive dedup** — entities are deduplicated and joined on a
+  case-insensitive key (downcased) while preserving the original casing for
+  display.
 - **Idempotent** — entities are deduplicated in memory and bulk-inserted with
   `insert_all(..., unique_by:)` against unique indexes, so re-running is a no-op.
 
@@ -171,3 +176,6 @@ like a natural way to round out the UI.
 - Reviews reference movies by title, so `movies.title` is unique and indexed.
 - A reviewer can only review a movie once (`[movie_id, reviewer]` is unique).
 - Movies with no reviews sort last with an effective rating of 0.
+- Import-time dedup is case-insensitive, but the DB unique indexes remain
+  case-sensitive — the same entity with different casing across separate files
+  could still insert a duplicate row.

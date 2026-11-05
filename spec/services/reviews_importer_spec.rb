@@ -69,4 +69,16 @@ RSpec.describe ReviewsImporter, type: :service do
     expect(result.errors.size).to eq(1)
     expect(result.errors.first[:message]).to match(/invalid stars/)
   end
+
+  it "matches movies case-insensitively" do
+    reviews = write_csv([
+      "Movie,User,Stars,Review",
+      "GONE IN 60 SECONDS,Sam,4,Great"
+    ].join("\n") + "\n")
+
+    result = ReviewsImporter.new(reviews).call
+
+    expect(result.reviews).to eq(1)
+    expect(result.errors).to be_empty
+  end
 end

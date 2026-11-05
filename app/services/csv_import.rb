@@ -22,6 +22,12 @@ module CsvImport
     value.to_s.strip.gsub(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/, "")
   end
 
+  # Case-insensitive canonical key for deduplication and lookups. The original
+  # casing is still stored/displayed; only the comparison key is normalized.
+  def normalize_key(value)
+    value.to_s.downcase
+  end
+
   def read_header(path)
     CSV.open(path, encoding: "bom|utf-8", &:shift)
   end

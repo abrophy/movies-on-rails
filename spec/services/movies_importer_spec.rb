@@ -92,4 +92,21 @@ RSpec.describe MoviesImporter, type: :service do
     expect(movie.year).to eq(2001)
     expect(movie.actors.pluck(:name)).to eq([ "ActorName" ])
   end
+
+  it "deduplicates entities case-insensitively" do
+    movies = write_csv([
+      "Movie,Description,Year,Director,Actor,Filming location,Country",
+      "Case Study,A film,2001,Someone,Nicolas Cage,Studio City,US",
+      "case study,A film,2001,Someone,nicolas cage,STUDIO CITY,us"
+    ].join("\n") + "\n")
+
+    result = MoviesImporter.new(movies).call
+
+    expect(result.movies).to eq(1)
+    expect(result.actors).to eq(1)
+    expect(result.filming_locations).to eq(1)
+    expect(result.appearances).to eq(1)
+    expect(Movie.first.title).to eq("Case Study")
+    expect(Actor.first.name).to eq("Nicolas Cage")
+  end
 end

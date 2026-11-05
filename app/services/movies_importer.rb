@@ -26,10 +26,15 @@ class MoviesImporter
     insert_locations(locations)
 
     # These entities have just been upserted, so the lookups are complete.
-    movie_ids = Movie.pluck(:title, :id).to_h
-    actor_ids = Actor.pluck(:name, :id).to_h
+    # Keyed case-insensitively to match the deduplication above.
+    movie_ids = Movie.pluck(:title, :id).each_with_object({}) do |(title, id), memo|
+      memo[normalize_key(title)] = id
+    end
+    actor_ids = Actor.pluck(:name, :id).each_with_object({}) do |(name, id), memo|
+      memo[normalize_key(name)] = id
+    end
     location_ids = FilmingLocation.pluck(:name, :country, :id).each_with_object({}) do |(name, country, id), memo|
-      memo[[ name, country ]] = id
+      memo[[ normalize_key(name), normalize_key(country) ]] = id
     end
 
     insert_appearances(appearances, movie_ids, actor_ids, location_ids)
@@ -87,7 +92,7 @@ class MoviesImporter
 
   def dedupe_movies(rows)
     rows.each_with_object({}) do |row, memo|
-      memo[row[:title]] ||= {
+      memo[normalize_key(row[:title])] ||= {
         title: row[:title],
         description: row[:description],
         year: row[:year],
@@ -97,18 +102,27 @@ class MoviesImporter
   end
 
   def dedupe_actors(rows)
-    rows.map { |row| row[:actor] }.uniq
+    rows.each_with_object({}) do |row, memo|
+      memo[normalize_key(row[:actor])] ||= row[:actor]
+    end.values
   end
 
   def dedupe_locations(rows)
     rows.each_with_object({}) do |row, memo|
-      key = [ row[:location], row[:country] ]
+      key = [ normalize_key(row[:location]), normalize_key(row[:country]) ]
       memo[key] ||= { name: row[:location], country: row[:country] }
     end.values
   end
 
   def dedupe_appearances(rows)
-    rows.map { |row| [ row[:title], row[:actor], [ row[:location], row[:country] ] ] }.uniq
+    rows.each_with_object({}) do |row, memo|
+      key = [
+        normalize_key(row[:title]),
+        normalize_key(row[:actor]),
+        [ normalize_key(row[:location]), normalize_key(row[:country]) ]
+      ]
+      memo[key] ||= [ row[:title], row[:actor], [ row[:location], row[:country] ] ]
+    end.values
   end
 
   def insert_movies(movies)
@@ -126,10 +140,11 @@ class MoviesImporter
   def insert_appearances(appearances, movie_ids, actor_ids, location_ids)
     now = Time.current
     rows = appearances.map do |(title, actor, location_key)|
+      location, country = location_key
       {
-        movie_id: movie_ids.fetch(title),
-        actor_id: actor_ids.fetch(actor),
-        filming_location_id: location_ids.fetch(location_key),
+        movie_id: movie_ids.fetch(normalize_key(title)),
+        actor_id: actor_ids.fetch(normalize_key(actor)),
+        filming_location_id: location_ids.fetch([ normalize_key(location), normalize_key(country) ]),
         created_at: now,
         updated_at: now
       }
