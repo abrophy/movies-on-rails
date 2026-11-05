@@ -1,1 +1,36 @@
+# Project runtime
 .codewhale
+
+# Ignore bundler config.
+/.bundle
+
+# Ignore all environment files.
+/.env*
+/config/*.key
+
+# Ignore all logfiles and tempfiles.
+/log/*
+/tmp/*
+!/log/.keep
+!/tmp/.keep
+/tmp/pids/*
+!/tmp/pids/
+!/tmp/pids/.keep
+
+# Ignore storage (uploaded files in development) and SQLite databases.
+/storage/*
+!/storage/.keep
+/tmp/storage/*
+!/tmp/storage/
+!/tmp/storage/.keep
+/db/*.sqlite3
+/db/*.sqlite3-*
+
+# Ignore compiled assets.
+/public/assets
+
+# Node modules
+/node_modules
+
+# macOS
+.DS_Store
