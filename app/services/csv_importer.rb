@@ -3,12 +3,27 @@ require "csv"
 # Idempotently imports movies.csv and reviews.csv into the normalized schema.
 #
 # movies.csv is denormalized: one row per (movie, actor, filming location).
-# This importer deduplicates entities in memory first, then bulk-inserts them
-# with `insert_all` against the database's unique indexes (upsert), so running
-# it repeatedly is a no-op instead of creating duplicate rows.
+# This importer deduplicates entities in memory, then bulk-inserts them with
+# `insert_all` against the database's unique indexes (upsert), so running it
+# repeatedly is a no-op instead of creating duplicate rows.
+#
+# Safety model — the CSV is treated as untrusted input:
+# * Structure: each file's header row must match the expected columns exactly;
+#   anything else raises InvalidStructureError before any data is written.
+# * Sanitization: values are trimmed and stripped of control characters, and
+#   `year`/`stars` are validated by type and range.
+# * Injection: all writes go through `insert_all`, which binds values as SQL
+#   parameters — no CSV value is ever concatenated into SQL.
+# * Row resilience: malformed rows are skipped and reported (file, line, reason);
+#   every valid row still imports.
 class CsvImporter
+  MOVIES_COLUMNS = [ "Movie", "Description", "Year", "Director", "Actor", "Filming location", "Country" ].freeze
+  REVIEWS_COLUMNS = [ "Movie", "User", "Stars", "Review" ].freeze
+
+  class InvalidStructureError < StandardError; end
+
   Result = Struct.new(
-    :movies, :actors, :filming_locations, :appearances, :reviews,
+    :movies, :actors, :filming_locations, :appearances, :reviews, :errors,
     keyword_init: true
   )
 
@@ -18,6 +33,8 @@ class CsvImporter
   end
 
   def call
+    @errors = []
+
     movie_rows = parse_movies
     review_rows = parse_reviews
 
@@ -38,14 +55,15 @@ class CsvImporter
     end
 
     insert_appearances(appearances, movie_ids, actor_ids, location_ids)
-    insert_reviews(review_rows, movie_ids)
+    inserted_reviews = insert_reviews(review_rows, movie_ids)
 
     Result.new(
       movies: movies.size,
       actors: actors.size,
       filming_locations: locations.size,
       appearances: appearances.size,
-      reviews: review_rows.size
+      reviews: inserted_reviews,
+      errors: @errors
     )
   end
 
@@ -54,43 +72,113 @@ class CsvImporter
   # --- parsing ---------------------------------------------------------------
 
   def parse_movies
+    validate_columns!(read_header(@movies_path), MOVIES_COLUMNS, @movies_path)
+
     rows = []
-    CSV.foreach(@movies_path, headers: true, encoding: "bom|utf-8") do |row|
-      rows << {
-        title: row["Movie"].to_s.strip,
-        description: row["Description"].to_s.strip,
-        year: parse_year(row["Year"]),
-        director: row["Director"].to_s.strip,
-        actor: row["Actor"].to_s.strip,
-        location: row["Filming location"].to_s.strip,
-        country: row["Country"].to_s.strip
-      }
+    CSV.open(@movies_path, headers: true, encoding: "bom|utf-8") do |csv|
+      csv.each do |row|
+        data, error = parse_movie_row(row)
+        if error
+          record_error(@movies_path, csv.lineno, error)
+        else
+          rows << data
+        end
+      end
     end
     rows
   end
 
   def parse_reviews
-    rows = []
-    CSV.foreach(@reviews_path, headers: true, encoding: "bom|utf-8") do |row|
-      stars = Integer(row["Stars"].to_s.strip)
-      raise ArgumentError, "Star rating out of range (1..5): #{stars}" unless (1..5).cover?(stars)
+    validate_columns!(read_header(@reviews_path), REVIEWS_COLUMNS, @reviews_path)
 
-      rows << {
-        title: row["Movie"].to_s.strip,
-        reviewer: row["User"].to_s.strip,
-        stars: stars,
-        body: row["Review"].to_s.strip
-      }
+    rows = []
+    CSV.open(@reviews_path, headers: true, encoding: "bom|utf-8") do |csv|
+      csv.each do |row|
+        data, error = parse_review_row(row)
+        if error
+          record_error(@reviews_path, csv.lineno, error)
+        else
+          rows << data.merge(line: csv.lineno)
+        end
+      end
     end
     rows
   end
 
-  def parse_year(value)
-    text = value.to_s.strip
-    text.present? ? Integer(text) : nil
+  def parse_movie_row(row)
+    title = clean_text(row["Movie"])
+    description = clean_text(row["Description"])
+    year_text = clean_text(row["Year"])
+    director = clean_text(row["Director"])
+    actor = clean_text(row["Actor"])
+    location = clean_text(row["Filming location"])
+    country = clean_text(row["Country"])
+
+    missing = []
+    missing << "Movie" if title.blank?
+    missing << "Actor" if actor.blank?
+    missing << "Filming location" if location.blank?
+    missing << "Country" if country.blank?
+    return [ nil, "missing required field(s): #{missing.join(', ')}" ] if missing.any?
+
+    year = nil
+    if year_text.present?
+      return [ nil, "invalid year #{year_text.inspect}" ] unless year_text.match?(/\A\d+\z/)
+      year = year_text.to_i
+    end
+
+    [ { title: title, description: description, year: year, director: director, actor: actor, location: location, country: country }, nil ]
   end
 
-  # --- deduplication (the CSV is a cross product) ----------------------------
+  def parse_review_row(row)
+    title = clean_text(row["Movie"])
+    reviewer = clean_text(row["User"])
+    stars_text = clean_text(row["Stars"])
+    body = clean_text(row["Review"])
+
+    missing = []
+    missing << "Movie" if title.blank?
+    missing << "User" if reviewer.blank?
+    missing << "Stars" if stars_text.blank?
+    return [ nil, "missing required field(s): #{missing.join(', ')}" ] if missing.any?
+
+    unless stars_text.match?(/\A\d\z/) && (1..5).cover?(stars_text.to_i)
+      return [ nil, "invalid stars #{stars_text.inspect}" ]
+    end
+
+    [ { title: title, reviewer: reviewer, stars: stars_text.to_i, body: body }, nil ]
+  end
+
+  # --- structural validation --------------------------------------------------
+
+  # Reads the first row of a CSV (its header) without assuming `headers: true`.
+  def read_header(path)
+    CSV.open(path, encoding: "bom|utf-8", &:shift)
+  end
+
+  def validate_columns!(headers, expected, path)
+    actual = Array(headers).map { |header| header.to_s.strip.sub(/^\uFEFF/, "") }
+    return if actual == expected
+
+    raise InvalidStructureError,
+      "Unrecognized CSV structure in #{File.basename(path.to_s)}: " \
+      "expected columns [#{expected.join(', ')}], got [#{actual.join(', ')}]"
+  end
+
+  # --- sanitization ------------------------------------------------------------
+
+  # CSV content is untrusted: trim whitespace and drop control characters
+  # before use. SQL injection is not possible regardless of content, because
+  # every write goes through parameterized `insert_all`.
+  def clean_text(value)
+    value.to_s.strip.gsub(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/, "")
+  end
+
+  def record_error(path, line, message)
+    @errors << { file: File.basename(path.to_s), line: line, message: message }
+  end
+
+  # --- deduplication (the CSV is a cross product) ------------------------------
 
   def dedupe_movies(rows)
     rows.each_with_object({}) do |row, memo|
@@ -118,7 +206,7 @@ class CsvImporter
     rows.map { |row| [ row[:title], row[:actor], [ row[:location], row[:country] ] ] }.uniq
   end
 
-  # --- inserts (idempotent via unique indexes) --------------------------------
+  # --- inserts (idempotent via unique indexes) ----------------------------------
 
   def insert_movies(movies)
     Movie.insert_all(with_timestamps(movies), unique_by: :title)
@@ -147,13 +235,16 @@ class CsvImporter
   end
 
   def insert_reviews(review_rows, movie_ids)
-    unknown = review_rows.map { |review| review[:title] }.uniq - movie_ids.keys
-    raise ArgumentError, "Reviews reference unknown movies: #{unknown.join(', ')}" if unknown.any?
-
     now = Time.current
-    rows = review_rows.map do |review|
+    rows = review_rows.filter_map do |review|
+      movie_id = movie_ids[review[:title]]
+      unless movie_id
+        record_error(@reviews_path, review[:line], "references unknown movie #{review[:title].inspect}")
+        next
+      end
+
       {
-        movie_id: movie_ids.fetch(review[:title]),
+        movie_id: movie_id,
         reviewer: review[:reviewer],
         stars: review[:stars],
         body: review[:body],
@@ -161,7 +252,8 @@ class CsvImporter
         updated_at: now
       }
     end
-    Review.insert_all(rows, unique_by: [ :movie_id, :reviewer ])
+    Review.insert_all(rows, unique_by: [ :movie_id, :reviewer ]) if rows.any?
+    rows.size
   end
 
   def with_timestamps(rows)

@@ -24,7 +24,9 @@ two-join model cannot. Actor locations are derived through `appearances` with
 ## Importer
 
 Idempotent by construction: dedupe in memory, then `insert_all(..., unique_by:)`
-against unique indexes. Re-running produces identical counts.
+against unique indexes. Validates the CSV structure up front (wrong columns abort
+before any write), sanitizes values, and skips/reports malformed rows so valid
+data still imports.
 
 ## Resolved open questions
 

@@ -107,11 +107,20 @@ negligible, so I model the `(movie, actor, location)` triple explicitly in the
 `appearances` table. This is faithful to the source data and future-proofs against
 partial actor–location sets.
 
-### Idempotent importer
+### Importer
 
-The importer deduplicates entities in memory, then bulk-inserts with
-`insert_all(..., unique_by:)` against unique indexes, so re-running it is a no-op
-rather than producing duplicates.
+The importer treats the CSVs as untrusted input:
+
+- **Structure validation** — each file's header row must match the expected
+  columns exactly; anything else raises an error before any data is written.
+- **Sanitization** — values are trimmed and stripped of control characters, and
+  `year`/`stars` are validated by type and range.
+- **No SQL injection** — every write goes through `insert_all`, which binds values
+  as SQL parameters; no CSV value is ever concatenated into SQL.
+- **Fail loud, don't fail** — malformed rows are skipped and reported (file, line,
+  reason), and every valid row still imports.
+- **Idempotent** — entities are deduplicated in memory and bulk-inserted with
+  `insert_all(..., unique_by:)` against unique indexes, so re-running is a no-op.
 
 ### No authentication
 
