@@ -17,6 +17,7 @@ module CsvImport
 
   private
 
+  # Trim whitespace and strip C0 control characters (keeping tab, LF, and CR).
   def clean_text(value)
     value.to_s.strip.gsub(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/, "")
   end
