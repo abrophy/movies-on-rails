@@ -1,0 +1,23 @@
+<p class="back"><%= link_to "← Search actors", actors_path %></p>
+
+<h1><%= @actor.name %></h1>
+
+<div class="two-col">
+  <div class="card">
+    <h2>Movies</h2>
+    <ul class="plain-list">
+      <% @movies.each do |movie| %>
+        <li><%= link_to movie.title, movie_path(movie) %> <span class="muted">(<%= movie.year %>)</span></li>
+      <% end %>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>Filming locations</h2>
+    <ul class="plain-list">
+      <% @locations.each do |location| %>
+        <li><%= location.name %> <span class="muted">(<%= location.country %>)</span></li>
+      <% end %>
+    </ul>
+  </div>
+</div>

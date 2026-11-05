@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= content_for(:title) || "Movies on Rails" %></title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+    <%= yield :head %>
+    <link rel="icon" href="/icon.svg" type="image/svg+xml">
+    <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container">
+        <%= link_to "Movies on Rails", root_path, class: "brand" %>
+        <%= form_with url: actors_path, method: :get, class: "search-form" do |f| %>
+          <%= f.search_field :q, value: params[:q], placeholder: "Search actors…", "aria-label": "Search actors" %>
+          <%= f.submit "Search" %>
+        <% end %>
+      </div>
+    </header>
+
+    <main class="container">
+      <%= yield %>
+    </main>
+  </body>
+</html>

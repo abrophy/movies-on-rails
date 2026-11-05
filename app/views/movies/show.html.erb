@@ -1,0 +1,57 @@
+<p class="back"><%= link_to "← All movies", root_path %></p>
+
+<h1><%= @movie.title %> <span class="muted"><%= @movie.year %></span></h1>
+
+<div class="card">
+  <p class="director">Directed by <strong><%= @movie.director %></strong></p>
+  <div class="rating">
+    <span class="stars"><%= render_stars(@average_rating) %></span>
+    <span class="rating-num"><%= format_rating(@average_rating) %></span>
+    <span class="review-count">· <%= pluralize(@reviews.size, "review") %></span>
+  </div>
+  <% if @movie.description.present? %>
+    <p class="description"><%= @movie.description %></p>
+  <% end %>
+</div>
+
+<div class="two-col">
+  <div class="card">
+    <h2>Cast</h2>
+    <ul class="plain-list">
+      <% @actors.each do |actor| %>
+        <li><%= link_to actor.name, actor_path(actor) %></li>
+      <% end %>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>Filming locations</h2>
+    <ul class="plain-list">
+      <% @locations.each do |location| %>
+        <li><%= location.name %> <span class="muted">(<%= location.country %>)</span></li>
+      <% end %>
+    </ul>
+  </div>
+</div>
+
+<div class="card">
+  <h2>Reviews</h2>
+  <% if @reviews.any? %>
+    <ul class="reviews">
+      <% @reviews.each do |review| %>
+        <li>
+          <div class="review-head">
+            <strong><%= review.reviewer %></strong>
+            <span class="stars"><%= render_stars(review.stars) %></span>
+            <span class="muted"><%= review.stars %>/5</span>
+          </div>
+          <% if review.body.present? %>
+            <p class="review-body"><%= review.body %></p>
+          <% end %>
+        </li>
+      <% end %>
+    </ul>
+  <% else %>
+    <p class="muted">No reviews yet.</p>
+  <% end %>
+</div>

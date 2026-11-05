@@ -1,0 +1,20 @@
+<h1>Actors</h1>
+
+<%= form_with url: actors_path, method: :get, class: "search-form search-form-lg" do |f| %>
+  <%= f.search_field :q, value: @query, placeholder: "Search actors…", autofocus: true, "aria-label": "Search actors" %>
+  <%= f.submit "Search" %>
+<% end %>
+
+<% if @query.present? %>
+  <p class="muted"><%= pluralize(@actors.size, "result") %> for “<%= @query %>”</p>
+<% end %>
+
+<% if @actors.any? %>
+  <ul class="actor-list">
+    <% @actors.each do |actor| %>
+      <li class="card"><%= link_to actor.name, actor_path(actor) %></li>
+    <% end %>
+  </ul>
+<% elsif @query.present? %>
+  <p class="empty">No actors match “<%= @query %>”.</p>
+<% end %>
