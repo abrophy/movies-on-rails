@@ -96,4 +96,27 @@ class MoviesFlowTest < ActionDispatch::IntegrationTest
     json = JSON.parse(response.body)
     assert_equal [ "Giovani Ribisi" ], json.map { |a| a["name"] }
   end
+
+  test "api location show returns movies filmed there" do
+    location = FilmingLocation.find_by(name: "Los Angeles")
+    get api_v1_location_path(location)
+    assert_response :success
+    json = JSON.parse(response.body)
+    assert_equal "Los Angeles", json["name"]
+    assert_equal [ "Gone in 60 seconds", "Inception" ], json["movies"].map { |m| m["title"] }
+  end
+
+  test "api returns json 404 for an unknown id" do
+    get api_v1_movie_path(id: 999_999)
+    assert_response :not_found
+    assert_equal({ "error" => "not_found" }, JSON.parse(response.body))
+  end
+
+  test "actor search treats sql injection literally" do
+    before = Actor.count
+    get actors_path(q: "'; DROP TABLE actors; --")
+    assert_response :success
+    assert_match "No actors match", response.body
+    assert_equal before, Actor.count
+  end
 end

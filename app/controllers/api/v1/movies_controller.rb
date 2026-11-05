@@ -1,6 +1,6 @@
 module Api
   module V1
-    class MoviesController < ApplicationController
+    class MoviesController < BaseController
       def index
         movies = Movie.ordered_by_rating
         render json: movies.map { |movie| summary(movie) }
@@ -20,7 +20,7 @@ module Api
           review_count: reviews.size,
           actors: movie.actors.order(:name).pluck(:name),
           filming_locations: movie.filming_locations.order(:name).map do |location|
-            { name: location.name, country: location.country }
+            { id: location.id, name: location.name, country: location.country }
           end,
           reviews: reviews.order(:created_at, :id).map do |review|
             { reviewer: review.reviewer, stars: review.stars, body: review.body }
