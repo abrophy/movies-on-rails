@@ -44,7 +44,7 @@ MOVIES=/data/movies.csv REVIEWS=/data/reviews.csv bin/rails data:import
 bundle exec rspec
 ```
 
-System (end-to-end) specs drive a headless Chrome browser; Chrome must be installed.
+System (end-to-end) specs drive a headless Chrome browser; they are skipped (pending) when Chrome isn't installed.
 
 ## Linting
 
