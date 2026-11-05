@@ -113,6 +113,13 @@ The brief mentions security, not authentication, and every endpoint is read-only
 Security is handled with Rails defaults: strong parameters, CSRF protection,
 parameterized queries, and escaping of `LIKE` wildcards in search.
 
+### Location overview page
+
+The location overview page wasn't part of the requested feature set. I added it
+because, once filming locations were modeled and linked from the movie and actor
+pages, giving each location its own page (listing the movies filmed there) felt
+like a natural way to round out the UI.
+
 ### Other decisions
 
 - Reviews reference movies by title, so `movies.title` is unique and indexed.
