@@ -78,14 +78,14 @@ an actor's filming locations can be derived across all the movies they appear in
 
 ## API endpoints
 
-| Method | Path                   | Description                                                                    |
-| ------ | ---------------------- | ------------------------------------------------------------------------------ |
-| GET    | `/api/v1/movies`       | Movies sorted by average rating (includes `average_rating` and `review_count`) |
-| GET    | `/api/v1/movies/:id`   | One movie with its actors, locations, and reviews                              |
-| GET    | `/api/v1/actors`       | All actors                                                                     |
-| GET    | `/api/v1/actors?q=...` | Search actors by name (case-insensitive substring)                             |
-| GET    | `/api/v1/actors/:id`   | One actor with their movies and filming locations                              |
-| GET    | `/api/v1/locations/:id` | One location with the movies filmed there |
+| Method | Path                    | Description                                                                    |
+| ------ | ----------------------- | ------------------------------------------------------------------------------ |
+| GET    | `/api/v1/movies`        | Movies sorted by average rating (includes `average_rating` and `review_count`) |
+| GET    | `/api/v1/movies/:id`    | One movie with its actors, locations, and reviews                              |
+| GET    | `/api/v1/actors`        | All actors                                                                     |
+| GET    | `/api/v1/actors?q=...`  | Search actors by name (case-insensitive substring)                             |
+| GET    | `/api/v1/actors/:id`    | One actor with their movies and filming locations                              |
+| GET    | `/api/v1/locations/:id` | One location with the movies filmed there                                      |
 
 Example — `GET /api/v1/movies`:
 
@@ -112,13 +112,31 @@ Example — `GET /api/v1/movies`:
 
 ## Notes on implementation
 
+### Planning.md
+
+I generally set up a planning.md for brainstorming and working through implementation details.
+It's a place for me to keep track of decisions made and progress on tasks. I don't generally committ
+or share these but I thought it might be interesting for you to get a view into this, so I've
+included it this time.
+
+### DB and orchestration
+
+I opted out of containerizing this solution, and setting up a simple orchestration with
+docker compose, allowing for easy set up of an actual database. I feel like the code is
+what you're really interested in reviewing and that doesn't necessarily need a live postgres
+instance to verify.
+
+This should make testing, spin up, etc a bit easier.
+
+Where a dependency does exist (for example chrome for the capy specs) it's documented but
+I've also attempted to reduce the friction and made it optional where I can.
+
 ### Movies × actors × locations
 
 One interesting decision was how to model the `Movies × Actors × Locations` links.
-In the provided CSVs, every actor linked to a movie was present at every location —
-`movies.csv` is a full cartesian product of each movie's actors and locations.
+In the provided CSVs, every actor linked to a movie was present at every location.
 
-The simpler alternative is to model a movie as having many locations and deriving
+The simpler alternative here is to model a movie as having many locations and deriving
 an actor's locations through that link. But that schema cannot represent a case
 where an actor did _not_ film at one of a movie's distinct locations; the data
 would be silently lost on import.
