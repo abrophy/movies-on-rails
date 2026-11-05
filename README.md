@@ -31,6 +31,12 @@ MOVIES=/path/to/movies.csv REVIEWS=/path/to/reviews.csv bin/rails data:import
 bin/rails test
 ```
 
+## Linting
+
+```bash
+bundle exec rubocop
+```
+
 ## Implemented features
 
 - **CSV importer** (`bin/rails data:import`) that is idempotent and aware of the

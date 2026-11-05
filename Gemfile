@@ -4,6 +4,8 @@ source "https://rubygems.org"
 gem "rails", "~> 8.1.4", ">= 8.1.4.1"
 # CSV is no longer a default gem as of Ruby 3.4.
 gem "csv"
+# Omakase Ruby styling for Rails [https://github.com/rails/rubocop-rails-omakase/]
+gem "rubocop-rails-omakase", require: false
 # The modern asset pipeline for Rails [https://github.com/rails/propshaft]
 gem "propshaft"
 # Tailwind CSS via the standalone CLI (no Node required) [https://github.com/rails/tailwindcss-rails]
